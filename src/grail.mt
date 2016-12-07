@@ -15,20 +15,22 @@ import "src/create"  =~ [=> new_project :DeepFrozen]
 exports (main)
 
 
-def grail_version() as DeepFrozen:
-    traceln("Grail v0.0.1")
+object usage as DeepFrozen:
+    to version():
+        return "Grail v0.0.1"
 
+    to general():
+        return "\n".join([
+            "grail <command>",
+            "",
+            "Welcome to Monte's Holy Grail!",
+            "Here are the available commands:",
+            "\t\thelp [command]\tShow this help text or the help of a command",
+            "\t\tnew <project name>\tCreate a new Monte project",
+            "\t\tversion\t Display Grail's version number"])
 
-def help_string(eprintln, name :Str) as DeepFrozen:
-    if (name == ""):
-        eprintln("grail <command>")
-        eprintln("Welcome to Monte's Holy Grail!")
-        eprintln("Here are the available commands:")
-        eprintln("\t\thelp [command]\tShow this help text or the help of a command")
-        eprintln("\t\tnew <project name>\tCreate a new Monte project")
-        eprintln("\t\tversion\t Display Grail's version number")
-    else:
-        eprintln("Command specific help text coming soon")
+    to onCommand(command :Str):
+        return "Command specific help text coming soon"
 
 
 def makeWriteAccess(makeFileResource) as DeepFrozen:
@@ -59,21 +61,26 @@ def makeWriteAccess(makeFileResource) as DeepFrozen:
                 return f.setContents(bs)
 
 
-def main(argv, => stdio, => makeFileResource) as DeepFrozen:
+def main(argv, => stdio, => makeFileResource) :Int as DeepFrozen:
     def stderr := stdio.stderr()
     def eprintln(x):
-        stderr(b`${`$x$\n`}`)
+        def line := `$x$\n`
+        stderr(b`$line`)
 
     def cwd := makeWriteAccess(makeFileResource)(".")
 
-    switch (argv):
+    return switch (argv):
         match [=="new", name]:
             new_project(name, cwd)
         match [=="version"]:
-            grail_version()
-        match [command]:
-            help_string(eprintln, command)
+            eprintln(usage.version())
+        match [=="help"]:
+            eprintln(usage.general())
         match [=="help", what]:
-            help_string(eprintln, what)
+            eprintln(usage.onCommand(what))
+        match [command]:
+            eprintln(usage.onCommand(command))
+            1
         match _:
-            help_string(eprintln, "")
+            eprintln(usage.general())
+            1
