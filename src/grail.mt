@@ -31,14 +31,44 @@ def help_string(eprintln, name :Str) as DeepFrozen:
         eprintln("Command specific help text coming soon")
 
 
+def makeWriteAccess(makeFileResource) as DeepFrozen:
+    "a la python pathlib, with some Emily influence"
+    return def writeAccessTo(here: Str):
+        def f := makeFileResource(here)
+
+        return object writeAccess:
+            to _printOn(out):
+                return out.print(`<write to $here>`)
+
+            to path():
+                return here
+
+            to approxDivide(sub :Str):
+                "pathlib idiom: here / sub"
+                def there := `$here/$sub`
+                if (there.split("/").contains("..")):
+                    throw(`no .. allowed: $there`)
+                return writeAccessTo(there)
+
+            to with_suffix(suffix :Str):
+                if (suffix.contains('/')):
+                    throw(`no / allowed in suffix: $suffix`)
+                return writeAccessTo(here + suffix)
+
+            to setContents(bs :Bytes):
+                return f.setContents(bs)
+
+
 def main(argv, => stdio, => makeFileResource) as DeepFrozen:
     def stderr := stdio.stderr()
     def eprintln(x):
         stderr(b`${`$x$\n`}`)
 
+    def cwd := makeWriteAccess(makeFileResource)(".")
+
     switch (argv):
         match [=="new", name]:
-            new_project(name, makeFileResource)
+            new_project(name, cwd)
         match [=="version"]:
             grail_version()
         match [command]:
