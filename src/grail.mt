@@ -19,38 +19,31 @@ def grail_version() as DeepFrozen:
     traceln("Grail v0.0.1")
 
 
-def help_string(name :Str) as DeepFrozen:
+def help_string(eprintln, name :Str) as DeepFrozen:
     if (name == ""):
-        traceln("grail <command>\n")
-        traceln("Welcome to Monte's Holy Grail!")
-        traceln("Here are the available commands:\n")
-        traceln("\t\thelp [command]\tShow this help text or the help of a command")
-        traceln("\t\tnew <project name>\tCreate a new Monte project")
-        traceln("\t\tversion\t Display Grail's version number")
+        eprintln("grail <command>")
+        eprintln("Welcome to Monte's Holy Grail!")
+        eprintln("Here are the available commands:")
+        eprintln("\t\thelp [command]\tShow this help text or the help of a command")
+        eprintln("\t\tnew <project name>\tCreate a new Monte project")
+        eprintln("\t\tversion\t Display Grail's version number")
     else:
-        traceln("Command specific help text coming soon")
+        eprintln("Command specific help text coming soon")
 
 
-def main(argv, => makeFileResource) as DeepFrozen:
-    # Check that a command was given, provide help string if not
-    traceln(M.toString(argv.size()))
-    if (argv.size() <= 0):
-        help_string()
+def main(argv, => stdio, => makeFileResource) as DeepFrozen:
+    def stderr := stdio.stderr()
+    def eprintln(x):
+        stderr(b`${`$x$\n`}`)
 
-    # The command to run is...
-    def command := argv.get(0)
-    switch (command):
-        match =="help":
-            if (argv.size() == 1):
-                help_string()
-            else:
-                help_string(argv.get(1))
-        match =="new":
-            if (argv.size() >= 2):
-                new_project(argv.get(1), makeFileResource)
-            else:
-                help_string("new")
-        match =="version":
+    switch (argv):
+        match [=="new", name]:
+            new_project(name, makeFileResource)
+        match [=="version"]:
             grail_version()
+        match [command]:
+            help_string(eprintln, command)
+        match [=="help", what]:
+            help_string(eprintln, what)
         match _:
-            help_string()
+            help_string(eprintln, "")
