@@ -15,20 +15,28 @@ import "lib/json" =~ [=> JSON :DeepFrozen]
 exports (new_project)
 
 
-def makeMtJSON(=> name :Str) :Str as DeepFrozen:
+def makeMtJSON(name :Str) :Str as DeepFrozen:
     def j := [
         "name" => name,
         "paths" => ["."],
         "entrypoint" => `$name.mt`,
         "dependencies" => {}
     ]
-    JSON.encode(j)
+    return JSON.encode(j, null)
 
 
-def new_project(name :Str, => makeFileResource) as DeepFrozen:
+def new_project(name :Str, makeFileResource) as DeepFrozen:
     traceln(`Creating project $name`)
     # Create project folder - Waiting on Typhon support
     def project_json := makeMtJSON(name)
-    # Save mt.json
-    makeFileResource(`./mt.json`)<-setContents(project_json)
-    makeFileResource(`./$name.mt`)
+
+    def save(path :Str, contents :Bytes):
+        def file := makeFileResource(path)
+        traceln(`saving to $file...`)
+        when (file<-setContents(contents)) ->
+            traceln(`saved to $file.`)
+        catch oops:
+           traceln.exception(oops)
+
+    save(`./mt.json`, b`$project_json`)
+    save(`./$name.mt`, b`# $name`)
